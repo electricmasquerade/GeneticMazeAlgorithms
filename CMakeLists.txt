@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30.5)
-project(FluidSimulation)
+project(GeneticMazeAlgorithms)
 
 set(CMAKE_CXX_STANDARD 26)
 
@@ -48,7 +48,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(imgui-sfml)
 
 
-add_executable(GeneticMazeAlgorithms main.cpp)
+add_executable(GeneticMazeAlgorithms main.cpp
+        Generator.cpp
+        Generator.h
+        Renderer.cpp
+        Renderer.h)
 
 
 target_link_libraries(GeneticMazeAlgorithms PRIVATE
