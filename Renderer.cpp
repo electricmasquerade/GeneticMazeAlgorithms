@@ -1,8 +1,7 @@
 
 #include "Renderer.h"
 
-void Renderer::renderMaze(const Maze& maze) {
-    int thickness = 2;
+void Renderer::renderMaze(const Maze& maze) const {
     //get maze dimensions
     const int width = maze.width;
     const int height = maze.height;
@@ -14,6 +13,7 @@ void Renderer::renderMaze(const Maze& maze) {
     //loop through cells creating rectangles for each cell
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
+            constexpr int thickness = 2;
             //get the cell number
             const int cellNum = y * width + x;
             //create a rectangle for the cell
@@ -57,6 +57,9 @@ void Renderer::startAnimation(const Maze& maze, const std::vector<Movement>& ste
     animatedMaze.height = maze.height;
     animatedMaze.width = maze.width;
     animatedMaze.cells.resize(animatedMaze.height * animatedMaze.width);
+    for (int i = 0; i < animatedMaze.width * animatedMaze.height; ++i) {
+        animatedMaze.cells[i] = WALL_N | WALL_S | WALL_E | WALL_W;
+    }
     animatedSteps = steps;
     currentStep = 0;
     accumulator = 0;
@@ -65,14 +68,14 @@ void Renderer::startAnimation(const Maze& maze, const std::vector<Movement>& ste
 void Renderer::updateAnim(const float dt) {
     //handle one step of the animation
     accumulator += dt;
-    while (accumulator >= dt && currentStep < animatedSteps.size()) {
+    while (accumulator >= timePerFrame && currentStep < animatedSteps.size()) {
         //get the current step
         Movement movement = animatedSteps[currentStep];
         //remove the wall in the given direction
         Generator::removeWall(animatedMaze, movement.x, movement.y, movement.direction);
         //increment the step
         currentStep++;
-        accumulator -= dt;
+        accumulator -= timePerFrame;
     }
 
 }

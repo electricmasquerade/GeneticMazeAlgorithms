@@ -43,7 +43,9 @@ void Generator::updateStep(Movement movement) {
     //mark the cell as visited
     maze.visited[cellNum] = true;
     //add the cell to the movements vector, including direction
-    movements.push_back(movement);
+
+    //recording too many movements, remove this
+    //movements.push_back(movement);
 
     //find all unvisited neighbors, shuffle array first
     std::array<int, 4> directions = { UP, RIGHT, DOWN, LEFT};
@@ -63,6 +65,8 @@ void Generator::updateStep(Movement movement) {
         }
         //remove the wall between the current cell and the neighbor
         removeWall(this->maze, movement.x, movement.y, i);
+        //only add remove wall movements to the list
+        movements.push_back({ movement.x, movement.y, static_cast<Direction>(i) });
         //update the step for the neighbor
         Movement neighborMovement = { neighborX, neighborY, static_cast<Direction>(i) };
         //recursively update the neighbor

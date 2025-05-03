@@ -15,10 +15,13 @@ public:
     }
     ~Renderer() = default;
 
-    void renderMaze(const Maze& maze);
+    void renderMaze(const Maze& maze) const;
     void startAnimation(const Maze& maze, const std::vector<Movement>& steps);
     void updateAnim(float dt);
     void drawAnim();
+    void setFramerateLimit(float framerate) {this->framerate = framerate; timePerFrame = 1.0f / framerate;}
+
+    bool getAnimationFinished(){return currentStep >= animatedSteps.size();}
 
 private:
     sf::RenderWindow& window;

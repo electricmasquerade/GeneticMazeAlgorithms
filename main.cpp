@@ -11,18 +11,21 @@ int main() {
     //sample ImGui code for now
     constexpr unsigned windowWidth = 800;
     sf::RenderWindow window(sf::VideoMode({windowWidth, windowWidth}), "ImGui + SFML = <3");
-    window.setFramerateLimit(120);
+    window.setFramerateLimit(240);
     ImGui::SFML::Init(window);
     sf::Clock deltaClock;
 
     //handle maze generation here
     Generator maze(25, 25);
     Renderer renderer(window);
+    renderer.setFramerateLimit(120);
 
-
+    static bool visualizeGeneration = false;
+    static bool animating = false;
+    static bool stepThrough = false;
+    float stepsPerSecond = 60.0f;
 
     while (window.isOpen()) {
-        static bool visualizeGeneration = false;
         // Process events, including window close
         while (const auto event = window.pollEvent()) {
             ImGui::SFML::ProcessEvent(window, *event);
@@ -47,8 +50,18 @@ int main() {
 
         //add button here to generate maze
         ImGui::Checkbox("Visualize Maze Generation", &visualizeGeneration);
+        //ImGui::Checkbox("Pause", &animating);
+        ImGui::Checkbox("Step Through Animation", &stepThrough);
         if (ImGui::Button("Generate Maze")) {
             maze.generateMaze();
+
+            if (visualizeGeneration) {
+                renderer.startAnimation(maze.getMaze(), maze.getMovements());
+                animating = true;
+            }
+            else {
+                animating = false;
+            }
         }
 
 
@@ -66,8 +79,16 @@ int main() {
 
         window.clear();
         //Put render code here
-        renderer.renderMaze(maze.getMaze());
-
+        if (animating) {
+            renderer.updateAnim(deltaTime.asSeconds());
+            renderer.drawAnim();
+            if (renderer.getAnimationFinished()) {
+                animating = false;
+            }
+        }
+        else {
+            renderer.renderMaze(maze.getMaze());
+        }
         ImGui::SFML::Render(window);
         window.display();
     }
