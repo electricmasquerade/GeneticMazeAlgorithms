@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Generator.h"
 #include <algorithm>
+#include <array>
 
 
 Generator::Generator(const int width, const int height) : rng(std::random_device{}()) {
