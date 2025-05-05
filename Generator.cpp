@@ -147,6 +147,7 @@ void Generator::reset() {
         maze.visited[i] = false;
     }
     movements.clear();
+}
 
 
 bool Generator::saveMazeToFile(const std::string &fileName) const {
