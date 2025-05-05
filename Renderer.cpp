@@ -3,66 +3,13 @@
 #include <SFML/Graphics.hpp>
 
 
-// TODO: make this much faster!! vertex array or something, drawing too many rects as of now
-void Renderer::renderMaze(const Maze& maze) const {
-    //get maze dimensions
-    const size_t width = maze.width;
-    const size_t height = maze.height;
-    if (width <= 0 || height <= 0) {
-        return; // Invalid maze dimensions
-    }
-    //Create a vertex array for white background cells, possibly optional. Otherwise, leave the background clear.
-    sf::VertexArray cells(sf::PrimitiveType::Triangles);
-    cells.resize(maze.width * maze.height * 6);
+void Renderer::renderMaze(const Maze& maze) {
+    //window.clear(sf::Color::White);
 
-    //get the size of the window
-    const sf::Vector2u windowSize = window.getSize();
-    //calculate the size of each cell, break window up into grid basically
-    const float cellWidth = static_cast<float>(windowSize.x) / width;
-    const float cellHeight = static_cast<float>(windowSize.y) / height;
-    //Use triangles to make rectangles, vertex buffer to render all at once.
-
-
-
-    //loop through cells creating rectangles for each cell
-    // for (int y = 0; y < height; ++y) {
-    //     for (int x = 0; x < width; ++x) {
-    //         //get the cell number
-    //         const int cellNum = y * width + x;
-    //         //create a rectangle for the cell
-    //         sf::RectangleShape cell(sf::Vector2f(cellWidth, cellHeight));
-    //         //set the position of the cell
-    //         cell.setPosition({x * cellWidth, y * cellHeight});
-    //         //set the color of the cell
-    //         cell.setFillColor(sf::Color::White);
-    //         window.draw(cell);
-    //         //check for walls and draw rectangles for them
-    //         if (maze.cells[cellNum] & WALL_N) {
-    //             sf::RectangleShape wall(sf::Vector2f(cellWidth, thickness));
-    //             wall.setPosition({x * cellWidth, y * cellHeight});
-    //             wall.setFillColor(sf::Color::Black);
-    //             window.draw(wall);
-    //         }
-    //         if (maze.cells[cellNum] & WALL_S) {
-    //             sf::RectangleShape wall(sf::Vector2f(cellWidth, thickness));
-    //             wall.setPosition({x * cellWidth, (y + 1) * cellHeight});
-    //             wall.setFillColor(sf::Color::Black);
-    //             window.draw(wall);
-    //         }
-    //         if (maze.cells[cellNum] & WALL_E) {
-    //             sf::RectangleShape wall(sf::Vector2f(thickness, cellHeight));
-    //             wall.setPosition({(x + 1) * cellWidth, y * cellHeight});
-    //             wall.setFillColor(sf::Color::Black);
-    //             window.draw(wall);
-    //         }
-    //         if (maze.cells[cellNum] & WALL_W) {
-    //             sf::RectangleShape wall(sf::Vector2f(thickness, cellHeight));
-    //             wall.setPosition({x * cellWidth, y * cellHeight});
-    //             wall.setFillColor(sf::Color::Black);
-    //             window.draw(wall);
-    //         }
-    //     }
-    // }
+    buildVertexArrays(maze);
+    //draw the cells
+    window.draw(cells);
+    window.draw(walls);
 }
 
 void Renderer::startAnimation(const Maze& maze, const std::vector<Movement>& steps) {
@@ -98,8 +45,9 @@ void Renderer::drawAnim() {
     renderMaze(animatedMaze);
 }
 
-void Renderer::buildVertexArrays(const Maze& maze) {//get maze dimensions
-    cells.setPrimitiveType(sf::PrimitiveType::Triangles);
+void Renderer::buildVertexArrays(const Maze& maze) {
+    cells.clear();
+    walls.clear();
 
     //get maze dimensions
     const size_t width = maze.width;
@@ -107,8 +55,62 @@ void Renderer::buildVertexArrays(const Maze& maze) {//get maze dimensions
     if (width <= 0 || height <= 0) {
         return;
     }
-    cells.resize(maze.width * maze.height * 6);
-    //init walls
-    walls.setPrimitiveType(sf::PrimitiveType::Triangles);
-    walls.resize(maze.width * maze.height * 6 * 4); // 4 walls per cell, 6 vertices per wall
+    // cells.resize(maze.width * maze.height * 6);
+    // walls.resize(maze.width * maze.height * 6 * 4); // 4 walls per cell, 6 vertices per wall
+    //get the size of the window
+    const sf::Vector2u windowSize = window.getSize();
+    //calculate the size of each cell, break window up into grid basically
+    const float cellWidth = static_cast<float>(windowSize.x) / width;
+    const float cellHeight = static_cast<float>(windowSize.y) / height;
+
+    //loop through cells creating rectangles for each cell
+    for (size_t y = 0; y < height; ++y) {
+        for (size_t x = 0; x < width; ++x) {
+            const int cellNum = y * width + x;
+            //create a rectangle for the cell
+            addQuad(cells, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight),
+                    static_cast<int>(cellWidth), static_cast<int>(cellHeight), 255);
+
+            if (maze.cells[cellNum] & WALL_N) {
+                //draw north wall
+                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight), 
+                        static_cast<int>(cellWidth), static_cast<int>(thickness), 0);
+            }
+            if (maze.cells[cellNum] & WALL_S) {
+                //draw south wall
+                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>((y + 1) * cellHeight - thickness), 
+                        static_cast<int>(cellWidth), static_cast<int>(thickness), 0);
+            }
+            if (maze.cells[cellNum] & WALL_E) {
+                //draw east wall
+                addQuad(walls, static_cast<int>((x + 1) * cellWidth - thickness), static_cast<int>(y * cellHeight), 
+                        static_cast<int>(thickness), static_cast<int>(cellHeight), 0);
+            }
+            if (maze.cells[cellNum] & WALL_W) {
+                //draw west wall
+                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight), 
+                        static_cast<int>(thickness), static_cast<int>(cellHeight), 0);
+            }
+            
+        }
+    }
+
+    
+}
+
+void Renderer::addQuad(sf::VertexArray &array, int x, int y, int width, int height, uint8_t color) {
+    //create triangle 1
+    sf::Vertex v1(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)), sf::Color(color, color, color));
+    sf::Vertex v2(sf::Vector2f(static_cast<float>(x + width), static_cast<float>(y)), sf::Color(color, color, color));
+    sf::Vertex v3(sf::Vector2f(static_cast<float>(x), static_cast<float>(y + height)), sf::Color(color, color, color));
+    array.append(v1);
+    array.append(v2);
+    array.append(v3);
+
+    //create triangle 2
+    sf::Vertex v4(sf::Vector2f(static_cast<float>(x + width), static_cast<float>(y + height)), sf::Color(color, color, color));
+    array.append(v2);
+    array.append(v3);
+    array.append(v4);
+    
 }

@@ -17,9 +17,9 @@ int main() {
     sf::Clock deltaClock;
 
     //handle maze generation here
-    Generator maze(20, 20);
-    Renderer renderer(window);
-    renderer.setFramerateLimit(60);
+    Generator maze(100, 100);
+    Renderer renderer(window, 1.0f);
+    renderer.setFramerateLimit(120.0f);
 
     static bool visualizeGeneration = false;
     static bool animating = false;
@@ -40,6 +40,9 @@ int main() {
                 // Update the view to the new size of the window
                 sf::FloatRect visibleArea({0.f, 0.f}, sf::Vector2f(resized->size));
                 window.setView(sf::View(visibleArea));
+
+                //TODO: fix resizing the maze, looks like crap right now
+                renderer.buildVertexArrays(maze.getMaze());
             }
         }
         sf::Time deltaTime = deltaClock.restart();
@@ -81,7 +84,7 @@ int main() {
         ImGui::End();
 
 
-        window.clear();
+        window.clear(sf::Color::White);
         //Put render code here
         if (animating) {
             renderer.updateAnim(deltaTime.asSeconds());
