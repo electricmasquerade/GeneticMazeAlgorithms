@@ -16,7 +16,7 @@ int main() {
     sf::Clock deltaClock;
 
     //handle maze generation here
-    Generator maze(25, 25);
+    Generator maze(200, 200);
     Renderer renderer(window);
     renderer.setFramerateLimit(120);
 
