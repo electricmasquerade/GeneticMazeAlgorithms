@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Generator.h"
 #include <algorithm>
+#include <array>
 
 
 Generator::Generator(const int width, const int height) : rng(std::random_device{}()) {
@@ -18,21 +19,21 @@ Generator::Generator(const int width, const int height) : rng(std::random_device
 
 void Generator::generateMaze() {
     reset();
-    printMaze();
+    //printMaze();
     //removeWall(0,0,1);
     // Recursively update the maze, removing walls with depth-first search.
     // Mutate the maze in place, but record steps for rendering later
 
     //start in the top left always, goal is bottom right.
-    Movement startingMovement = { 0, 0, DOWN };
+    constexpr Movement startingMovement = { 0, 0, DOWN };
     updateStep(startingMovement);
     //print the maze after generation
-    printMaze();
+    //printMaze();
 
 
 }
 
-void Generator::updateStep(Movement movement) {
+void Generator::updateStep(const Movement movement) {
     //handle the recursion and updating of the cell and neighbor
     //find current cell with standard formula
     const int cellNum = movement.y * maze.width + movement.x;
@@ -154,4 +155,5 @@ void Generator::reset() {
         maze.cells[i] = WALL_N | WALL_S | WALL_E | WALL_W;
         maze.visited[i] = false;
     }
+    movements.clear();
 }
