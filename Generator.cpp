@@ -13,24 +13,16 @@ Generator::Generator(const int width, const int height) : rng(std::random_device
     maze.cells.resize(width * height);
     maze.visited.resize(width * height, false);
     reset();
-
-
 }
 
 void Generator::generateMaze() {
     reset();
-    printMaze();
-    //removeWall(0,0,1);
-    // Recursively update the maze, removing walls with depth-first search.
-    // Mutate the maze in place, but record steps for rendering later
 
     //start in the top left always, goal is bottom right.
-    Movement startingMovement = { 0, 0, DOWN };
+    Movement startingMovement = {0, 0, DOWN};
     updateStep(startingMovement);
     //print the maze after generation
-    printMaze();
-
-
+    //printMaze();
 }
 
 void Generator::updateStep(Movement movement) {
@@ -49,9 +41,9 @@ void Generator::updateStep(Movement movement) {
     //movements.push_back(movement);
 
     //find all unvisited neighbors, shuffle array first
-    std::array<int, 4> directions = { UP, RIGHT, DOWN, LEFT};
+    std::array<int, 4> directions = {UP, RIGHT, DOWN, LEFT};
     std::ranges::shuffle(directions, rng);
-    for (int i : directions) {
+    for (int i: directions) {
         //find the neighbor cell
         const int neighborX = movement.x + dx[i];
         const int neighborY = movement.y + dy[i];
@@ -67,20 +59,19 @@ void Generator::updateStep(Movement movement) {
         //remove the wall between the current cell and the neighbor
         removeWall(this->maze, movement.x, movement.y, i);
         //only add remove wall movements to the list
-        movements.push_back({ movement.x, movement.y, static_cast<Direction>(i) });
+        movements.push_back({movement.x, movement.y, static_cast<Direction>(i)});
         //update the step for the neighbor
-        Movement neighborMovement = { neighborX, neighborY, static_cast<Direction>(i) };
+        Movement neighborMovement = {neighborX, neighborY, static_cast<Direction>(i)};
         //recursively update the neighbor
         updateStep(neighborMovement);
     }
-
 }
 
 //   0 = Up    (north)
 //   1 = Right (east)
 //   2 = Down  (south)
 //   3 = Left  (west)
-void Generator::removeWall(Maze& maze,const int x, const int y, const int direction) {
+void Generator::removeWall(Maze &maze, const int x, const int y, const int direction) {
     //find current cell with standard formula
     const int cellNum = y * maze.width + x;
 
@@ -113,7 +104,6 @@ void Generator::removeWall(Maze& maze,const int x, const int y, const int direct
     //check if the wall is a border wall and cell is a border cell
 
 
-
     //remove the wall in the opposite direction for the neighbor
     const int neighborX = x + dx[direction];
     const int neighborY = y + dy[direction];
@@ -124,10 +114,6 @@ void Generator::removeWall(Maze& maze,const int x, const int y, const int direct
     const int neighborCellNum = neighborY * maze.width + neighborX;
     maze.cells[neighborCellNum] = maze.cells[neighborCellNum] & ~neighborWall;
     maze.cells[cellNum] = maze.cells[cellNum] & ~wall;
-
-
-
-
 }
 
 void Generator::printMaze() const {
@@ -155,4 +141,5 @@ void Generator::reset() {
         maze.cells[i] = WALL_N | WALL_S | WALL_E | WALL_W;
         maze.visited[i] = false;
     }
+    movements.clear();
 }

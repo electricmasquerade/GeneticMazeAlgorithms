@@ -20,13 +20,19 @@ public:
     void updateAnim(float dt);
     void drawAnim();
     void setFramerateLimit(float framerate) {this->framerate = framerate; timePerFrame = 1.0f / framerate;}
+    void buildVertexArrays(const Maze& maze);
 
-    bool getAnimationFinished(){return currentStep >= animatedSteps.size();}
+    [[nodiscard]] bool getAnimationFinished() const {return currentStep >= animatedSteps.size();}
+    [[nodiscard]] size_t getAnimationStep() const {return currentStep;}
+    [[nodiscard]] size_t getTotalSteps() const {return animatedSteps.size();}
 
 private:
     sf::RenderWindow& window;
     Maze animatedMaze;
     std::vector<Movement> animatedSteps;
+    float thickness = 2;
+    sf::VertexArray cells;
+    sf::VertexArray walls;
 
     int currentStep = 0;
     float accumulator = 0;

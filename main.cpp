@@ -7,23 +7,26 @@
 #include "Generator.h"
 #include "Renderer.h"
 
+
 int main() {
     //sample ImGui code for now
     constexpr unsigned windowWidth = 800;
     sf::RenderWindow window(sf::VideoMode({windowWidth, windowWidth}), "ImGui + SFML = <3");
-    window.setFramerateLimit(240);
+    window.setFramerateLimit(120);
     ImGui::SFML::Init(window);
     sf::Clock deltaClock;
 
     //handle maze generation here
-    Generator maze(25, 25);
+    Generator maze(20, 20);
     Renderer renderer(window);
-    renderer.setFramerateLimit(120);
+    renderer.setFramerateLimit(60);
 
     static bool visualizeGeneration = false;
     static bool animating = false;
+    static bool paused = false;
+    bool stepOnce = false;
     static bool stepThrough = false;
-    float stepsPerSecond = 60.0f;
+
 
     while (window.isOpen()) {
         // Process events, including window close
@@ -54,6 +57,7 @@ int main() {
         ImGui::Checkbox("Step Through Animation", &stepThrough);
         if (ImGui::Button("Generate Maze")) {
             maze.generateMaze();
+            renderer.buildVertexArrays(maze.getMaze());
 
             if (visualizeGeneration) {
                 renderer.startAnimation(maze.getMaze(), maze.getMovements());
