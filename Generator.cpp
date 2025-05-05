@@ -2,6 +2,7 @@
 #include "Generator.h"
 #include <algorithm>
 #include <array>
+#include <fstream>
 
 
 Generator::Generator(const int width, const int height) : rng(std::random_device{}()) {
@@ -13,22 +14,16 @@ Generator::Generator(const int width, const int height) : rng(std::random_device
     maze.cells.resize(width * height);
     maze.visited.resize(width * height, false);
     reset();
-
-
 }
 
 void Generator::generateMaze() {
     reset();
-    //printMaze();
-    //removeWall(0,0,1);
-    // Recursively update the maze, removing walls with depth-first search.
-    // Mutate the maze in place, but record steps for rendering later
+
 
     //start in the top left always, goal is bottom right.
-    constexpr Movement startingMovement = { 0, 0, DOWN };
+    const Movement startingMovement = {0, 0, DOWN};
     updateStep(startingMovement);
-    //print the maze after generation
-    //printMaze();
+
 
 
 }
@@ -49,9 +44,9 @@ void Generator::updateStep(const Movement movement) {
     //movements.push_back(movement);
 
     //find all unvisited neighbors, shuffle array first
-    std::array<int, 4> directions = { UP, RIGHT, DOWN, LEFT};
+    std::array<int, 4> directions = {UP, RIGHT, DOWN, LEFT};
     std::ranges::shuffle(directions, rng);
-    for (int i : directions) {
+    for (int i: directions) {
         //find the neighbor cell
         const int neighborX = movement.x + dx[i];
         const int neighborY = movement.y + dy[i];
@@ -67,20 +62,19 @@ void Generator::updateStep(const Movement movement) {
         //remove the wall between the current cell and the neighbor
         removeWall(this->maze, movement.x, movement.y, i);
         //only add remove wall movements to the list
-        movements.push_back({ movement.x, movement.y, static_cast<Direction>(i) });
+        movements.push_back({movement.x, movement.y, static_cast<Direction>(i)});
         //update the step for the neighbor
-        Movement neighborMovement = { neighborX, neighborY, static_cast<Direction>(i) };
+        Movement neighborMovement = {neighborX, neighborY, static_cast<Direction>(i)};
         //recursively update the neighbor
         updateStep(neighborMovement);
     }
-
 }
 
 //   0 = Up    (north)
 //   1 = Right (east)
 //   2 = Down  (south)
 //   3 = Left  (west)
-void Generator::removeWall(Maze& maze,const int x, const int y, const int direction) {
+void Generator::removeWall(Maze &maze, const int x, const int y, const int direction) {
     //find current cell with standard formula
     const int cellNum = y * maze.width + x;
 
@@ -113,7 +107,6 @@ void Generator::removeWall(Maze& maze,const int x, const int y, const int direct
     //check if the wall is a border wall and cell is a border cell
 
 
-
     //remove the wall in the opposite direction for the neighbor
     const int neighborX = x + dx[direction];
     const int neighborY = y + dy[direction];
@@ -124,11 +117,9 @@ void Generator::removeWall(Maze& maze,const int x, const int y, const int direct
     const int neighborCellNum = neighborY * maze.width + neighborX;
     maze.cells[neighborCellNum] = maze.cells[neighborCellNum] & ~neighborWall;
     maze.cells[cellNum] = maze.cells[cellNum] & ~wall;
-
-
-
-
 }
+
+
 
 void Generator::printMaze() const {
     //print the maze to the console, in a square format
@@ -156,4 +147,42 @@ void Generator::reset() {
         maze.visited[i] = false;
     }
     movements.clear();
+
+
+bool Generator::saveMazeToFile(const std::string &fileName) const {
+    std::ofstream file{fileName, std::ios::binary};
+    const auto width = maze.width;
+    const auto height = maze.height;
+    if (!file) {
+        std::cerr << "Error opening file for writing: " << fileName << std::endl;
+        return false;
+    }
+    //write the maze to the file in binary, not human readable
+    file.write(reinterpret_cast<const char*>(&width), sizeof(width));
+    file.write(reinterpret_cast<const char*>(&height), sizeof(height));
+    file.write(reinterpret_cast<const char*>(maze.cells.data()), maze.cells.size() * sizeof(uint8_t));
+
+    return true;
+
+}
+
+bool Generator::loadMazeFromFile(const std::string &fileName) {
+    std::ifstream file{fileName, std::ios::binary};
+    if (!file) {
+        std::cerr << "Error opening file for reading: " << fileName << std::endl;
+        return false;
+    }
+    //read the maze from the file in binary
+    size_t width = 0;
+    size_t height = 0;
+    file.read(reinterpret_cast<char*>(&width), sizeof(width));
+    file.read(reinterpret_cast<char*>(&height), sizeof(height));
+    maze.cells.resize(width * height);
+    maze.width = width;
+    maze.height = height;
+    file.read(reinterpret_cast<char*>(maze.cells.data()), maze.cells.size() * sizeof(uint8_t));
+    //add maze data to cells
+
+
+    return true;
 }
