@@ -52,7 +52,9 @@ add_executable(GeneticMazeAlgorithms main.cpp
         Generator.cpp
         Generator.h
         Renderer.cpp
-        Renderer.h)
+        Renderer.h
+        SolverAgent.cpp
+        SolverAgent.h)
 
 
 target_link_libraries(GeneticMazeAlgorithms PRIVATE
