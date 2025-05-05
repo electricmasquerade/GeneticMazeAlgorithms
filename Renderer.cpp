@@ -1,9 +1,8 @@
-
 #include "Renderer.h"
 #include <SFML/Graphics.hpp>
 
 
-void Renderer::renderMaze(const Maze& maze) {
+void Renderer::renderMaze(const Maze &maze) {
     //window.clear(sf::Color::White);
 
     buildVertexArrays(maze);
@@ -12,7 +11,7 @@ void Renderer::renderMaze(const Maze& maze) {
     window.draw(walls);
 }
 
-void Renderer::startAnimation(const Maze& maze, const std::vector<Movement>& steps) {
+void Renderer::startAnimation(const Maze &maze, const std::vector<Movement> &steps) {
     //set the animated maze to the original maze
     animatedMaze.height = maze.height;
     animatedMaze.width = maze.width;
@@ -26,7 +25,7 @@ void Renderer::startAnimation(const Maze& maze, const std::vector<Movement>& ste
     buildVertexArrays(animatedMaze);
 }
 
-void Renderer::updateAnim(const float dt) {
+void Renderer::updateGenAnim(const float dt) {
     //handle one step of the animation
     accumulator += dt;
     while (accumulator >= timePerFrame && currentStep < animatedSteps.size()) {
@@ -38,14 +37,13 @@ void Renderer::updateAnim(const float dt) {
         currentStep++;
         accumulator -= timePerFrame;
     }
-
 }
 
 void Renderer::drawAnim() {
     renderMaze(animatedMaze);
 }
 
-void Renderer::buildVertexArrays(const Maze& maze) {
+void Renderer::buildVertexArrays(const Maze &maze) {
     cells.clear();
     walls.clear();
 
@@ -73,44 +71,63 @@ void Renderer::buildVertexArrays(const Maze& maze) {
 
             if (maze.cells[cellNum] & WALL_N) {
                 //draw north wall
-                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight), 
+                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight),
                         static_cast<int>(cellWidth), static_cast<int>(thickness), 0);
             }
             if (maze.cells[cellNum] & WALL_S) {
                 //draw south wall
-                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>((y + 1) * cellHeight - thickness), 
+                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>((y + 1) * cellHeight - thickness),
                         static_cast<int>(cellWidth), static_cast<int>(thickness), 0);
             }
             if (maze.cells[cellNum] & WALL_E) {
                 //draw east wall
-                addQuad(walls, static_cast<int>((x + 1) * cellWidth - thickness), static_cast<int>(y * cellHeight), 
+                addQuad(walls, static_cast<int>((x + 1) * cellWidth - thickness), static_cast<int>(y * cellHeight),
                         static_cast<int>(thickness), static_cast<int>(cellHeight), 0);
             }
             if (maze.cells[cellNum] & WALL_W) {
                 //draw west wall
-                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight), 
+                addQuad(walls, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight),
                         static_cast<int>(thickness), static_cast<int>(cellHeight), 0);
             }
-            
         }
     }
-
-    
 }
 
-void Renderer::addQuad(sf::VertexArray &array, int x, int y, int width, int height, uint8_t color) {
-    //create triangle 1
-    sf::Vertex v1(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)), sf::Color(color, color, color));
-    sf::Vertex v2(sf::Vector2f(static_cast<float>(x + width), static_cast<float>(y)), sf::Color(color, color, color));
-    sf::Vertex v3(sf::Vector2f(static_cast<float>(x), static_cast<float>(y + height)), sf::Color(color, color, color));
+void Renderer::addQuad(sf::VertexArray &array, float x, float y, int width, int height, uint8_t color) {
+    //create vertices
+    sf::Vertex v1, v2, v3, v4;
+
+    v1.position = {x, y};
+    v2.position = {x + width, y};
+    v3.position = {x, y + height};
+    v4.position = {x + width, y + height};
+
+    //create color for the vertices
+    v1.color = sf::Color(color, color, color);
+    v2.color = sf::Color(color, color, color);
+    v3.color = sf::Color(color, color, color);
+    v4.color = sf::Color(color, color, color);
+
+    //add the vertices to the array for triangle 1
     array.append(v1);
     array.append(v2);
     array.append(v3);
-
-    //create triangle 2
-    sf::Vertex v4(sf::Vector2f(static_cast<float>(x + width), static_cast<float>(y + height)), sf::Color(color, color, color));
+    //add the vertices to the array for triangle 2
     array.append(v2);
     array.append(v3);
     array.append(v4);
-    
+
+
+    // const sf::Vertex v1(sf::Vector2f(static_cast<float>(x), static_cast<float>(y)), sf::Color(color, color, color));
+    // const sf::Vertex v2(sf::Vector2f(static_cast<float>(x + width), static_cast<float>(y)), sf::Color(color, color, color));
+    // const sf::Vertex v3(sf::Vector2f(static_cast<float>(x), static_cast<float>(y + height)), sf::Color(color, color, color));
+    // array.append(v1);
+    // array.append(v2);
+    // array.append(v3);
+    //
+    // //create triangle 2
+    // const sf::Vertex v4(sf::Vector2f(static_cast<float>(x + width), static_cast<float>(y + height)), sf::Color(color, color, color));
+    // array.append(v2);
+    // array.append(v3);
+    // array.append(v4);
 }

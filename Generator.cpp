@@ -2,6 +2,7 @@
 #include "Generator.h"
 #include <algorithm>
 #include <array>
+#include <fstream>
 
 
 Generator::Generator(const int width, const int height) : rng(std::random_device{}()) {
@@ -19,10 +20,9 @@ void Generator::generateMaze() {
     reset();
 
     //start in the top left always, goal is bottom right.
-    Movement startingMovement = {0, 0, DOWN};
+    const Movement startingMovement = {0, 0, DOWN};
     updateStep(startingMovement);
-    //print the maze after generation
-    //printMaze();
+
 }
 
 void Generator::updateStep(Movement movement) {
@@ -116,6 +116,8 @@ void Generator::removeWall(Maze &maze, const int x, const int y, const int direc
     maze.cells[cellNum] = maze.cells[cellNum] & ~wall;
 }
 
+
+
 void Generator::printMaze() const {
     //print the maze to the console, in a square format
     //print top border first
@@ -142,4 +144,41 @@ void Generator::reset() {
         maze.visited[i] = false;
     }
     movements.clear();
+}
+
+bool Generator::saveMazeToFile(const std::string &fileName) const {
+    std::ofstream file{fileName, std::ios::binary};
+    const auto width = maze.width;
+    const auto height = maze.height;
+    if (!file) {
+        std::cerr << "Error opening file for writing: " << fileName << std::endl;
+        return false;
+    }
+    //write the maze to the file in binary, not human readable
+    file.write(reinterpret_cast<const char*>(&width), sizeof(width));
+    file.write(reinterpret_cast<const char*>(&height), sizeof(height));
+    file.write(reinterpret_cast<const char*>(maze.cells.data()), maze.cells.size() * sizeof(uint8_t));
+
+    return true;
+}
+
+bool Generator::loadMazeFromFile(const std::string &fileName) {
+    std::ifstream file{fileName, std::ios::binary};
+    if (!file) {
+        std::cerr << "Error opening file for reading: " << fileName << std::endl;
+        return false;
+    }
+    //read the maze from the file in binary
+    size_t width = 0;
+    size_t height = 0;
+    file.read(reinterpret_cast<char*>(&width), sizeof(width));
+    file.read(reinterpret_cast<char*>(&height), sizeof(height));
+    maze.cells.resize(width * height);
+    maze.width = width;
+    maze.height = height;
+    file.read(reinterpret_cast<char*>(maze.cells.data()), maze.cells.size() * sizeof(uint8_t));
+    //add maze data to cells
+
+
+    return true;
 }

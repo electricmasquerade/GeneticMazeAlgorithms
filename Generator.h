@@ -14,7 +14,7 @@ enum Direction {
 };
 
 struct Maze {
-    int width, height;
+    size_t width, height;
     std::vector<uint8_t> cells;
     std::vector<bool> visited;
 };
@@ -33,8 +33,12 @@ public:
     void updateStep(Movement movement);
     static void removeWall(Maze& maze, int x, int y, int direction);
 
+    void setMaze(const Maze& maze){this->maze = maze;}
     [[nodiscard]] const Maze& getMaze() const{return maze;}
     [[nodiscard]] const std::vector<Movement>& getMovements() const{return movements;}
+
+    bool saveMazeToFile(const std::string& fileName) const;
+    bool loadMazeFromFile(const std::string& fileName);
 
     void printMaze() const; //probably useless but leaving it here for testing
 

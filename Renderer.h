@@ -21,11 +21,11 @@ public:
 
     void renderMaze(const Maze& maze);
     void startAnimation(const Maze& maze, const std::vector<Movement>& steps);
-    void updateAnim(float dt);
+    void updateGenAnim(float dt);
     void drawAnim();
     void setFramerateLimit(float framerate) {this->framerate = framerate; timePerFrame = 1.0f / framerate;}
     void buildVertexArrays(const Maze& maze);
-    void addQuad(sf::VertexArray& array, int x, int y, int width, int height, uint8_t color);
+    void addQuad(sf::VertexArray &array, float x, float y, int width, int height, uint8_t color);
 
     [[nodiscard]] bool getAnimationFinished() const {return currentStep >= animatedSteps.size();}
     [[nodiscard]] size_t getAnimationStep() const {return currentStep;}
