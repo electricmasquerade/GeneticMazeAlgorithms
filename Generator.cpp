@@ -19,13 +19,16 @@ Generator::Generator(const int width, const int height) : rng(std::random_device
 void Generator::generateMaze() {
     reset();
 
+
     //start in the top left always, goal is bottom right.
     const Movement startingMovement = {0, 0, DOWN};
     updateStep(startingMovement);
 
+
+
 }
 
-void Generator::updateStep(Movement movement) {
+void Generator::updateStep(const Movement movement) {
     //handle the recursion and updating of the cell and neighbor
     //find current cell with standard formula
     const int cellNum = movement.y * maze.width + movement.x;
@@ -144,7 +147,7 @@ void Generator::reset() {
         maze.visited[i] = false;
     }
     movements.clear();
-}
+
 
 bool Generator::saveMazeToFile(const std::string &fileName) const {
     std::ofstream file{fileName, std::ios::binary};
@@ -160,6 +163,7 @@ bool Generator::saveMazeToFile(const std::string &fileName) const {
     file.write(reinterpret_cast<const char*>(maze.cells.data()), maze.cells.size() * sizeof(uint8_t));
 
     return true;
+
 }
 
 bool Generator::loadMazeFromFile(const std::string &fileName) {

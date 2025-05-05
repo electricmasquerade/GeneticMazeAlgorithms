@@ -17,6 +17,7 @@ int main() {
     sf::Clock deltaClock;
 
     //handle maze generation here
+
     Generator maze(50, 50);
     Renderer renderer(window, 1.0f);
     renderer.setFramerateLimit(120.0f);
@@ -30,6 +31,7 @@ int main() {
     static char savePath[128] = "mazes/maze1.mz";
     static char loadPath[128] = "mazes/maze1.mz";
     static char message[128] = "";
+
 
     static bool visualizeGeneration = false;
     static bool animating = false;
