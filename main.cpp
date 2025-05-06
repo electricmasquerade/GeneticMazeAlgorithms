@@ -7,6 +7,7 @@
 #include <SFML/Window/Event.hpp>
 #include "Generator.h"
 #include "Renderer.h"
+#include "SolverAgent.h"
 
 
 int main() {
@@ -18,8 +19,9 @@ int main() {
 
     //handle maze generation here
 
-    Generator maze(50, 50);
+    Generator maze(25, 25);
     Renderer renderer(window, 1.0f);
+    SolverAgent solver = SolverAgent(maze.getMaze());
     renderer.setFramerateLimit(120.0f);
     Maze currentMaze = maze.getMaze();
     renderer.buildVertexArrays(currentMaze);
@@ -101,6 +103,7 @@ int main() {
         ImGui::Checkbox("Step Through Animation", &stepThrough);
         if (ImGui::Button("Generate Maze")) {
             maze.generateMaze();
+            renderer.setDirty();
             renderer.buildVertexArrays(maze.getMaze());
 
             if (visualizeGeneration) {
@@ -119,10 +122,29 @@ int main() {
 
         ImGui::SetNextWindowPos(ImVec2(controls_pos.x + data_pos.x, 0));
         ImGui::SetNextWindowBgAlpha(0.5f);
-        //ImGui::SetNextWindowSize(ImVec2(200, 100));
-        ImGui::Begin("Simulation Data", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text("Frame Rate: %.1f FPS", 1.0f / ImGui::GetIO().DeltaTime);
+        ImGui::Begin("Solver", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("Solver Agent");
+        if (ImGui::Button("Solve Maze")) {
+            //solver.setMaze(maze.getMaze());
+            solver.reset();
+            solver.setStartPosition(0, 0);
+            solver.setGoalPosition(maze.getMaze().width - 1, maze.getMaze().height - 1);
+            solver.solve();
+            solver.printSolution();
+        }
+        if (ImGui::Button("Show Solution")) {
+            renderer.highlightSolution(maze.getMaze(), solver.getSolution());
+        }
+
         ImGui::End();
+
+
+        // ImGui::SetNextWindowPos(ImVec2(controls_pos.x + data_pos.x, 0));
+        // ImGui::SetNextWindowBgAlpha(0.5f);
+        // //ImGui::SetNextWindowSize(ImVec2(200, 100));
+        // ImGui::Begin("Simulation Data", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        // ImGui::Text("Frame Rate: %.1f FPS", 1.0f / ImGui::GetIO().DeltaTime);
+        // ImGui::End();
 
 
         window.clear(sf::Color::White);

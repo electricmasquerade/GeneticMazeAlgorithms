@@ -4,8 +4,10 @@
 
 void Renderer::renderMaze(const Maze &maze) {
     //window.clear(sf::Color::White);
-
-    buildVertexArrays(maze);
+    if (dirty) {
+        buildVertexArrays(maze);
+        dirty = false;
+    }
     //draw the cells
     window.draw(cells);
     window.draw(walls);
@@ -44,6 +46,7 @@ void Renderer::drawAnim() {
 }
 
 void Renderer::buildVertexArrays(const Maze &maze) {
+    dirty = false;
     cells.clear();
     walls.clear();
 
@@ -130,4 +133,13 @@ void Renderer::addQuad(sf::VertexArray &array, float x, float y, int width, int 
     // array.append(v2);
     // array.append(v3);
     // array.append(v4);
+}
+
+void Renderer::highlightSolution(const Maze& maze, const std::vector<int> &solution) {//solution is just a list of cell indices
+    buildVertexArrays(maze);
+    //highlight cells in the maze blue for the solution, with the start and end red
+    for (const auto cell : solution) {
+        cells[cell].color = sf::Color::Blue;
+    }
+
 }
