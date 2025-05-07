@@ -21,8 +21,6 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-
-
 FetchContent_Declare(
         imgui
         URL "https://github.com/ocornut/imgui/archive/v${IMGUI_VERSION}.zip"

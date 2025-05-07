@@ -7,20 +7,23 @@
 #include <SFML/Window/Event.hpp>
 #include "Generator.h"
 #include "Renderer.h"
+#include "SolverAgent.h"
 
 
 int main() {
-    constexpr unsigned windowWidth = 800;
-    sf::RenderWindow window(sf::VideoMode({windowWidth, windowWidth}), "Maze Algorithms");
+    constexpr unsigned windowWidth = 1000;
+    constexpr unsigned windowHeight = windowWidth * 0.8;
+    sf::RenderWindow window(sf::VideoMode({windowWidth, windowHeight}), "Maze Algorithms");
     window.setFramerateLimit(120);
     ImGui::SFML::Init(window);
     sf::Clock deltaClock;
 
     //handle maze generation here
 
-    Generator maze(50, 50);
+    Generator maze(10, 10);
     Renderer renderer(window, 1.0f);
-    renderer.setFramerateLimit(120.0f);
+    SolverAgent solver = SolverAgent(maze.getMaze());
+    renderer.setFramerateLimit(240.0f);
     Maze currentMaze = maze.getMaze();
     renderer.buildVertexArrays(currentMaze);
 
@@ -32,12 +35,16 @@ int main() {
     static char loadPath[128] = "mazes/maze1.mz";
     static char message[128] = "";
 
-
+    static int mazeWidth = 10;
+    static int mazeHeight = 10;
     static bool visualizeGeneration = false;
+    static bool visualizeSearch = false;
     static bool animating = false;
-    static bool paused = false;
-    bool stepOnce = false;
-    static bool stepThrough = false;
+    static bool searching = false;
+    //static bool paused = false;
+    //bool stepOnce = false;
+    //static bool stepThrough = false;
+    static float frameRate = 60.0f;
 
 
     while (window.isOpen()) {
@@ -58,14 +65,46 @@ int main() {
         sf::Time deltaTime = deltaClock.restart();
         ImGui::SFML::Update(window, deltaTime);
 
+        //handle maze render stuff, split to side window
+        window.clear(sf::Color::White);
+
+        sf::View mazeView = window.getDefaultView();
+        mazeView.setViewport(sf::FloatRect{{0.2f, 0.0f}, {0.8f, 1.0f}});
+        window.setView(mazeView);
+
+        //Put render code here
+        if (animating) {
+            renderer.updateGenAnim(deltaTime.asSeconds());
+            renderer.drawAnim();
+            if (renderer.getAnimationFinished()) {
+                animating = false;
+            }
+        }
+        else if (searching) {
+            renderer.updateSearchAnim(deltaTime.asSeconds());
+            renderer.drawAnim();
+            if (renderer.getSearchFinished()) {
+                renderer.highlightSolution(maze.getMaze(), solver.getSolution());
+                visualizeSearch = false;
+            }
+        }
+
+        else {
+            renderer.renderMaze(maze.getMaze());
+        }
+
+        //split controls back to the left of screen
+        window.setView(window.getDefaultView());
+
+
         // ImGui window for simulation controls
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.5f);
-        //ImGui::SetNextWindowSize(ImVec2(250, 120));
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.2}, ImGuiCond_Always);
         ImGui::Begin("Data", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
         ImGui::InputText("Save As", savePath, IM_ARRAYSIZE(savePath));
-        ImGui::SameLine();
+        //ImGui::SameLine();
         if (ImGui::Button("Save Maze")) {
             if (maze.saveMazeToFile(savePath)) {
                 snprintf(message, sizeof(message), "Maze saved to %s", savePath);
@@ -74,14 +113,16 @@ int main() {
             }
         }
         ImGui::InputText("Load From", loadPath, IM_ARRAYSIZE(loadPath));
-        ImGui::SameLine();
+        //ImGui::SameLine();
         if (ImGui::Button("Load Maze")) {
             if (maze.loadMazeFromFile(loadPath)) {
                 Maze loadedMaze = maze.getMaze();
                 currentMaze = loadedMaze;
                 maze.reset();
                 maze.setMaze(currentMaze);
-                snprintf(message, sizeof(message), "Maze loaded from %s", loadPath);
+                solver.rebuild(maze.getMaze());
+                //solver = SolverAgent(maze.getMaze());
+                snprintf(message, sizeof(message), "Loaded from %s", loadPath);
                 renderer.buildVertexArrays(maze.getMaze());
             } else {
                 snprintf(message, sizeof(message), "Error loading maze from %s", loadPath);
@@ -91,16 +132,44 @@ int main() {
         ImGui::Text("%s", message);
         ImGui::End();
 
-        ImGui::SetNextWindowPos(ImVec2(data_pos.x, 0));
+        ImGui::SetNextWindowPos(ImVec2(0, data_pos.y), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.2}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.5f);
         ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
         //add button here to generate maze
         ImGui::Checkbox("Visualize Maze Generation", &visualizeGeneration);
         //ImGui::Checkbox("Pause", &animating);
-        ImGui::Checkbox("Step Through Animation", &stepThrough);
+        ImGui::PushItemWidth( ImGui::GetWindowWidth() * 0.9f );
+        ImGui::SliderFloat("##", &frameRate, 30.0f, 240.0f);
+
+        ImGui::Text("Animation Framerate: %.2f", frameRate);
+        ImGui::PopItemWidth();
+        if (animating || searching) {
+            renderer.setFramerateLimit(frameRate);
+        }
+        else {
+            renderer.setFramerateLimit(60.0f);
+        }
+
+        //add size for maze inputs
+        ImGui::PushItemWidth( ImGui::GetWindowWidth() * 0.6f );
+        ImGui::InputInt("Width", &mazeWidth);
+        ImGui::InputInt("Height", &mazeHeight);
+        if (mazeWidth < 1) {
+            mazeWidth = 1;
+        }
+        if (mazeHeight < 1) {
+            mazeHeight = 1;
+        }
+        ImGui::PopItemWidth();
+
         if (ImGui::Button("Generate Maze")) {
+            maze = Generator(mazeWidth, mazeHeight);
+            solver.rebuild(maze.getMaze());
             maze.generateMaze();
+            renderer.setDirty();
+            searching = false;
             renderer.buildVertexArrays(maze.getMaze());
 
             if (visualizeGeneration) {
@@ -112,12 +181,39 @@ int main() {
             }
         }
 
-
-
         const ImVec2 controls_pos = ImGui::GetWindowSize();
         ImGui::End();
 
-        ImGui::SetNextWindowPos(ImVec2(controls_pos.x + data_pos.x, 0));
+        ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.2}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("Solver", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Checkbox("Visualize Search", &visualizeSearch);
+        ImGui::Text("Solver Agent");
+        if (ImGui::Button("Solve Maze")) {
+            //solver.setMaze(maze.getMaze());
+            solver.reset();
+            solver.setStartPosition(0, 0);
+            solver.setGoalPosition(maze.getMaze().width - 1, maze.getMaze().height - 1);
+            solver.solve();
+            renderer.buildVertexArrays(maze.getMaze());
+            if (visualizeSearch) {
+                renderer.startSearchAnim(maze.getMaze(), solver.getPath());
+                searching = true;
+            }
+            else {
+                searching = false;
+            }
+        }
+        if (ImGui::Button("Show Solution")) {
+            renderer.highlightSolution(maze.getMaze(), solver.getSolution());
+        }
+        ImVec2 solverPos = ImGui::GetWindowSize();
+        ImGui::End();
+
+
+        ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y + solverPos.y), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.1}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.5f);
         //ImGui::SetNextWindowSize(ImVec2(200, 100));
         ImGui::Begin("Simulation Data", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
@@ -125,18 +221,7 @@ int main() {
         ImGui::End();
 
 
-        window.clear(sf::Color::White);
-        //Put render code here
-        if (animating) {
-            renderer.updateGenAnim(deltaTime.asSeconds());
-            renderer.drawAnim();
-            if (renderer.getAnimationFinished()) {
-                animating = false;
-            }
-        }
-        else {
-            renderer.renderMaze(maze.getMaze());
-        }
+
         ImGui::SFML::Render(window);
         window.display();
     }

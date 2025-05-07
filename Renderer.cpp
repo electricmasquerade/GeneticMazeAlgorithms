@@ -4,8 +4,10 @@
 
 void Renderer::renderMaze(const Maze &maze) {
     //window.clear(sf::Color::White);
-
-    buildVertexArrays(maze);
+    if (dirty) {
+        buildVertexArrays(maze);
+        dirty = false;
+    }
     //draw the cells
     window.draw(cells);
     window.draw(walls);
@@ -25,6 +27,18 @@ void Renderer::startAnimation(const Maze &maze, const std::vector<Movement> &ste
     buildVertexArrays(animatedMaze);
 }
 
+void Renderer::startSearchAnim(const Maze &maze, const std::vector<int> &steps) {
+    animatedMaze = maze;
+    searchPath = steps;
+    searchStep = 0;
+    searchAccumulator = 0;
+    searchFinished = false;
+
+    buildVertexArrays(animatedMaze);
+
+}
+
+
 void Renderer::updateGenAnim(const float dt) {
     //handle one step of the animation
     accumulator += dt;
@@ -37,6 +51,34 @@ void Renderer::updateGenAnim(const float dt) {
         currentStep++;
         accumulator -= timePerFrame;
     }
+    buildVertexArrays(animatedMaze);
+
+}
+
+void Renderer::updateSearchAnim(float dt) {
+    if (searchFinished) {
+        return;
+    }
+    searchAccumulator += dt;
+    while (searchAccumulator >= timePerFrame && searchStep < searchPath.size()) {
+        //get the current step
+        int cell = searchPath[searchStep++];
+        int x = cell % animatedMaze.width;
+        int y = cell / animatedMaze.width;
+
+        //draw an overlay on this cell to represent frontier
+        const sf::Vector2u size = window.getSize();
+        const float cellWidth = static_cast<float>(size.x) / animatedMaze.width;
+        const float cellHeight = static_cast<float>(size.y) / animatedMaze.height;
+
+        addQuad(cells, x*cellWidth, y*cellHeight,
+                static_cast<int>(cellWidth), static_cast<int>(cellHeight), 180);
+
+        searchAccumulator -= timePerFrame;
+    }
+    if (searchStep >= searchPath.size()) {
+        searchFinished = true;
+    }
 }
 
 void Renderer::drawAnim() {
@@ -44,6 +86,7 @@ void Renderer::drawAnim() {
 }
 
 void Renderer::buildVertexArrays(const Maze &maze) {
+    dirty = false;
     cells.clear();
     walls.clear();
 
@@ -130,4 +173,31 @@ void Renderer::addQuad(sf::VertexArray &array, float x, float y, int width, int 
     // array.append(v2);
     // array.append(v3);
     // array.append(v4);
+}
+
+void Renderer::highlightSolution(const Maze& maze, const std::vector<int> &solution) {//solution is just a list of cell indices
+    buildVertexArrays(maze);
+
+    //get maze dimensions
+    const size_t width = maze.width;
+    const size_t height = maze.height;
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+    // cells.resize(maze.width * maze.height * 6);
+    // walls.resize(maze.width * maze.height * 6 * 4); // 4 walls per cell, 6 vertices per wall
+    //get the size of the window
+    const sf::Vector2u windowSize = window.getSize();
+    //calculate the size of each cell, break window up into grid basically
+    const float cellWidth = static_cast<float>(windowSize.x) / width;
+    const float cellHeight = static_cast<float>(windowSize.y) / height;
+    //highlight cells in the maze blue for the solution, with the start and end red
+    for (const auto cell : solution) {
+        const int x = cell % maze.width;
+        const int y = cell / maze.width;
+        //create a rectangle for the cell
+        addQuad(cells, static_cast<int>(x * cellWidth), static_cast<int>(y * cellHeight),
+                    static_cast<int>(cellWidth), static_cast<int>(cellHeight), 128);
+    }
+
 }
