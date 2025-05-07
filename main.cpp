@@ -20,10 +20,10 @@ int main() {
 
     //handle maze generation here
 
-    Generator maze(100, 100);
+    Generator maze(10, 10);
     Renderer renderer(window, 1.0f);
     SolverAgent solver = SolverAgent(maze.getMaze());
-    renderer.setFramerateLimit(120.0f);
+    renderer.setFramerateLimit(240.0f);
     Maze currentMaze = maze.getMaze();
     renderer.buildVertexArrays(currentMaze);
 
@@ -35,14 +35,16 @@ int main() {
     static char loadPath[128] = "mazes/maze1.mz";
     static char message[128] = "";
 
-
+    static int mazeWidth = 10;
+    static int mazeHeight = 10;
     static bool visualizeGeneration = false;
     static bool visualizeSearch = false;
     static bool animating = false;
     static bool searching = false;
-    static bool paused = false;
-    bool stepOnce = false;
-    static bool stepThrough = false;
+    //static bool paused = false;
+    //bool stepOnce = false;
+    //static bool stepThrough = false;
+    static float frameRate = 60.0f;
 
 
     while (window.isOpen()) {
@@ -118,6 +120,8 @@ int main() {
                 currentMaze = loadedMaze;
                 maze.reset();
                 maze.setMaze(currentMaze);
+                solver.rebuild(maze.getMaze());
+                //solver = SolverAgent(maze.getMaze());
                 snprintf(message, sizeof(message), "Loaded from %s", loadPath);
                 renderer.buildVertexArrays(maze.getMaze());
             } else {
@@ -136,8 +140,33 @@ int main() {
         //add button here to generate maze
         ImGui::Checkbox("Visualize Maze Generation", &visualizeGeneration);
         //ImGui::Checkbox("Pause", &animating);
-        ImGui::Checkbox("Step Through Animation", &stepThrough);
+        ImGui::PushItemWidth( ImGui::GetWindowWidth() * 0.9f );
+        ImGui::SliderFloat("##", &frameRate, 30.0f, 240.0f);
+
+        ImGui::Text("Animation Framerate: %.2f", frameRate);
+        ImGui::PopItemWidth();
+        if (animating || searching) {
+            renderer.setFramerateLimit(frameRate);
+        }
+        else {
+            renderer.setFramerateLimit(60.0f);
+        }
+
+        //add size for maze inputs
+        ImGui::PushItemWidth( ImGui::GetWindowWidth() * 0.6f );
+        ImGui::InputInt("Width", &mazeWidth);
+        ImGui::InputInt("Height", &mazeHeight);
+        if (mazeWidth < 1) {
+            mazeWidth = 1;
+        }
+        if (mazeHeight < 1) {
+            mazeHeight = 1;
+        }
+        ImGui::PopItemWidth();
+
         if (ImGui::Button("Generate Maze")) {
+            maze = Generator(mazeWidth, mazeHeight);
+            solver.rebuild(maze.getMaze());
             maze.generateMaze();
             renderer.setDirty();
             searching = false;

@@ -26,7 +26,7 @@ struct CompareFScore {
 
 class SolverAgent {
 public:
-    explicit SolverAgent(const Maze& maze);
+    explicit SolverAgent(Maze& maze);
     [[nodiscard]] float calculateHeuristic(int x, int y) const; //manhattan distance
     void solve();
 
@@ -38,6 +38,8 @@ public:
         goalX = x;
         goalY = y;
     }
+
+    void rebuild(Maze& maze);
 
     void printSolution() const;
     void reset();
@@ -59,7 +61,7 @@ public:
 
 
 private:
-    const Maze& maze;
+    Maze* maze;
     //starting position
     int startX{0};
     int startY{0};

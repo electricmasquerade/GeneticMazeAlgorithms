@@ -3,22 +3,24 @@
 #include <algorithm>
 #include <iostream>
 
-SolverAgent::SolverAgent(const Maze& maze) : maze(maze) {
-    // Initialize the closed set with the size of the maze
-    closedSet.resize(maze.width * maze.height, false);
-    // Initialize the fScore and gScore vectors with the size of the maze
-    // Set the initial fScore and gScore to infinity, since we want smallest distance/score
-    fScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
-    gScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
-
-    //init the parent cell vector
-    parents.resize(maze.width * maze.height, -1);
-
-    // Set the starting position and goal position
-    startX = 0;
-    startY = 0;
-    goalX = static_cast<int>(maze.width) - 1;
-    goalY = static_cast<int>(maze.height) - 1;
+SolverAgent::SolverAgent(Maze& maze) {
+    this->maze = &maze;
+    rebuild(maze);
+    // // Initialize the closed set with the size of the maze
+    // closedSet.resize(maze.width * maze.height, false);
+    // // Initialize the fScore and gScore vectors with the size of the maze
+    // // Set the initial fScore and gScore to infinity, since we want smallest distance/score
+    // fScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
+    // gScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
+    //
+    // //init the parent cell vector
+    // parents.resize(maze.width * maze.height, -1);
+    //
+    // // Set the starting position and goal position
+    // startX = 0;
+    // startY = 0;
+    // goalX = static_cast<int>(maze.width) - 1;
+    // goalY = static_cast<int>(maze.height) - 1;
 
 }
 
@@ -36,8 +38,8 @@ void SolverAgent::solve() {
     reset();
     // Implement the A* algorithm to solve the maze
     // Initialize the open set with the starting position
-    const int startCellID = startY * maze.width + startX;
-    const int goalCellID = goalY * maze.width + goalX;
+    const int startCellID = startY * maze->width + startX;
+    const int goalCellID = goalY * maze->width + goalX;
 
     gScore[startCellID] = 0;
     fScore[startCellID] = calculateHeuristic(startX, startY);
@@ -54,8 +56,8 @@ void SolverAgent::solve() {
         auto current = open_set.top();
         open_set.pop();
         const int currentCellID = current.cellID;
-        const int currentX = currentCellID % maze.width;
-        const int currentY = currentCellID / maze.width;
+        const int currentX = currentCellID % maze->width;
+        const int currentY = currentCellID / maze->width;
 
         //check if already visited somehow
         if (closedSet[currentCellID]) {
@@ -84,13 +86,13 @@ void SolverAgent::solve() {
             auto neighborY = currentY + dy[direction];
 
             //check if the neighbor is out of bounds
-            if (neighborX < 0 || neighborX >= maze.width || neighborY < 0 || neighborY >= maze.height) {
+            if (neighborX < 0 || neighborX >= maze->width || neighborY < 0 || neighborY >= maze->height) {
                 continue;
             }
-            const int neighborCellID = neighborY * maze.width + neighborX;
+            const int neighborCellID = neighborY * maze->width + neighborX;
 
             //check for wall between neighbor and current with wall mask
-            if (maze.cells[currentCellID] & wallMasks[direction]) {
+            if (maze->cells[currentCellID] & wallMasks[direction]) {
                 continue;
             }
 
@@ -113,11 +115,32 @@ void SolverAgent::solve() {
     }
     }
 
+void SolverAgent::rebuild(Maze &maze) {
+    //re-init all data when maze is generated at a new size
+    this->maze = &maze;
+    // Initialize the closed set with the size of the maze
+    closedSet.resize(maze.width * maze.height, false);
+    // Initialize the fScore and gScore vectors with the size of the maze
+    // Set the initial fScore and gScore to infinity, since we want smallest distance/score
+    fScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
+    gScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
+
+    //init the parent cell vector
+    parents.resize(maze.width * maze.height, -1);
+
+    // Set the starting position and goal position
+    startX = 0;
+    startY = 0;
+    goalX = static_cast<int>(maze.width) - 1;
+    goalY = static_cast<int>(maze.height) - 1;
+
+}
+
 void SolverAgent::printSolution() const {
     // Print the solution path
     std::cout << "Solution Path: ";
     for (const auto& cell : solution) {
-        std::cout << "(" << cell % maze.width << ", " << cell / maze.width << ") ";
+        std::cout << "(" << cell % maze->width << ", " << cell / maze->width << ") ";
     }
     std::cout << std::endl;
 }

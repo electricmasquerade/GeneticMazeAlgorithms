@@ -35,7 +35,12 @@ public:
 
     void setMaze(const Maze& maze){this->maze = maze;}
     [[nodiscard]] const Maze& getMaze() const{return maze;}
+    Maze& getMaze() {return maze;}
     [[nodiscard]] const std::vector<Movement>& getMovements() const{return movements;}
+    const void setWidth(int width){this->maze.width = width;}
+    const void setHeight(int height){this->maze.height = height;}
+    [[nodiscard]] int getWidth() const{return maze.width;}
+    [[nodiscard]] int getHeight() const{return maze.height;}
 
     bool saveMazeToFile(const std::string& fileName) const;
     bool loadMazeFromFile(const std::string& fileName);
