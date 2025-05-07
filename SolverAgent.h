@@ -45,6 +45,15 @@ public:
     [[nodiscard]] const std::vector<int> &getSolution() const {
         return solution;
     }
+    [[nodiscard]] const std::vector<int> &getPath() const {
+        return path;
+    }
+    [[nodiscard]] const std::vector<int> &getParents() const {
+        return parents;
+    }
+    [[nodiscard]] const std::vector<bool> &getClosedSet() const {
+        return closedSet;
+    }
 
 
 

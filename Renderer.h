@@ -20,7 +20,9 @@ public:
 
     void renderMaze(const Maze& maze);
     void startAnimation(const Maze& maze, const std::vector<Movement>& steps);
+    void startSearchAnim(const Maze& maze, const std::vector<int>& steps);
     void updateGenAnim(float dt);
+    void updateSearchAnim(float dt);
     void drawAnim();
     void setFramerateLimit(float framerate) {this->framerate = framerate; timePerFrame = 1.0f / framerate;}
     void buildVertexArrays(const Maze& maze);
@@ -29,6 +31,10 @@ public:
     [[nodiscard]] bool getAnimationFinished() const {return currentStep >= animatedSteps.size();}
     [[nodiscard]] size_t getAnimationStep() const {return currentStep;}
     [[nodiscard]] size_t getTotalSteps() const {return animatedSteps.size();}
+    [[nodiscard]] bool getSearchFinished() const {return searchFinished;}
+    [[nodiscard]] size_t getSearchStep() const {return searchStep;}
+    [[nodiscard]] size_t getTotalSearchSteps() const {return searchPath.size();}
+    [[nodiscard]] const std::vector<int>& getSearchPath() const {return searchPath;}
     void setAnimatedMaze(const Maze& maze) {animatedMaze = maze;}
     [[nodiscard]] const Maze& getAnimatedMaze() const {return animatedMaze;}
     [[nodiscard]] const std::vector<Movement>& getAnimatedSteps() const {return animatedSteps;}
@@ -42,6 +48,7 @@ private:
     sf::RenderWindow& window;
     Maze animatedMaze;
     std::vector<Movement> animatedSteps;
+
     float thickness = 2;
     sf::VertexArray cells;
     sf::VertexArray walls;
@@ -50,6 +57,12 @@ private:
     float accumulator = 0;
     float framerate = 60;
     float timePerFrame = 1.0f / framerate;
+
+    //search animation
+    std::vector<int> searchPath;
+    size_t searchStep = 0;
+    float searchAccumulator = 0;
+    bool searchFinished = true;
 
     static constexpr uint8_t WALL_N = 1 << 0;
     static constexpr uint8_t WALL_S = 1 << 1;
