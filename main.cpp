@@ -31,7 +31,7 @@ int main() {
 
 
     //create genetic agent stuff
-    GeneticAlgorithms ga = GeneticAlgorithms(100, 1000, 0.5f, 0.01f);
+    GeneticAlgorithms ga = GeneticAlgorithms(10, 10, 0.5f, 0.01f);
 
 
     //create maze folders
@@ -50,13 +50,19 @@ int main() {
     static bool visualizeSearch = false;
     static bool animating = false;
     static bool searching = false;
+
     //static bool paused = false;
     //bool stepOnce = false;
     //static bool stepThrough = false;
     static float frameRate = 60.0f;
 
-    static int train_size = 500;
-    static int test_size = 500;
+    static int train_size = 250;
+    static int test_size = 250;
+    static int populationSize = 20;
+    static int generations = 25;
+
+    ga.setPopulationSize(populationSize);
+    ga.setGenerationCount(generations);
 
 
     while (window.isOpen()) {
@@ -257,7 +263,20 @@ int main() {
         ImVec2 batchPos = ImGui::GetWindowSize();
         ImGui::End();
 
+        //genetic stuff
         ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y + solverPos.y + batchPos.y), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.2f}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("Genetic Algorithms", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        if (ImGui::Button("Train Agent")) {
+            ga.loadMazes("train_mazes");
+
+            ga.train();
+        }
+        ImVec2 genPos = ImGui::GetWindowSize();
+        ImGui::End();
+
+        ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y + solverPos.y + batchPos.y + genPos.y), ImGuiCond_Always);
         ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.1}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.5f);
         //ImGui::SetNextWindowSize(ImVec2(200, 100));

@@ -6,21 +6,6 @@
 SolverAgent::SolverAgent(Maze& maze) {
     this->maze = &maze;
     rebuild(maze);
-    // // Initialize the closed set with the size of the maze
-    // closedSet.resize(maze.width * maze.height, false);
-    // // Initialize the fScore and gScore vectors with the size of the maze
-    // // Set the initial fScore and gScore to infinity, since we want smallest distance/score
-    // fScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
-    // gScore.resize(maze.width * maze.height, std::numeric_limits<float>::max());
-    //
-    // //init the parent cell vector
-    // parents.resize(maze.width * maze.height, -1);
-    //
-    // // Set the starting position and goal position
-    // startX = 0;
-    // startY = 0;
-    // goalX = static_cast<int>(maze.width) - 1;
-    // goalY = static_cast<int>(maze.height) - 1;
 
 }
 

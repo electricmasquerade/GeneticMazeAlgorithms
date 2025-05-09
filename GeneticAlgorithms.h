@@ -3,6 +3,8 @@
 #define GENETICALGORITHMS_H
 #include <random>
 #include <vector>
+#include <__filesystem/directory_iterator.h>
+
 #include "Generator.h"
 
 /*
@@ -24,7 +26,7 @@ public:
     GeneticAlgorithms(size_t populationSize, size_t generationCount, float crossoverRate, float mutationRate);
     ~GeneticAlgorithms() = default;
 
-    void loadMazes(std::ifstream& mazesFolder);
+    void loadMazes(const std::string& folderPath);
 
     [[nodiscard]] float evaluate(const Maze& maze, const Chromosome& chromosome) const;
     void initPopulation(size_t populationSize);
@@ -39,6 +41,13 @@ public:
     static int calculateHeuristic(const Maze& maze, int currentCell, int targetCell);
 
     [[nodiscard]] Chromosome getBestChromosome() const;
+    void setGenerationCount(size_t generationCount){this->generationCount = generationCount;}
+    [[nodiscard]] size_t getGenerationCount() const {return generationCount;}
+    [[nodiscard]] size_t getPopulationSize() const{return populationSize;}
+    void setPopulationSize(size_t populationSize) {this->populationSize = populationSize;}
+    [[nodiscard]] const std::vector<Chromosome>& getPopulation() const{return population;}
+    [[nodiscard]] const std::vector<Maze>& getMazes() const {return mazes;}
+
 
 
 private:
@@ -55,6 +64,7 @@ private:
     static constexpr size_t MAX_POPULATION = 100;
     static constexpr size_t MAX_STEPS_PER_MAZE = 1000;
     static constexpr int GOAL_BONUS = 1000; //bonus for reaching the goal
+    static constexpr float DISTANCE_BONUS = 0.5; //bonus for distance to goal, smaller is better
     static constexpr size_t numInputs = 6; //number of inputs, 4 walls plus heuristic + bias term
     static constexpr size_t numOutputs = 4; //num of outputs, which is just the 4 directions
     static constexpr size_t numGenes = numInputs * numOutputs; //number of genes in the chromosome
