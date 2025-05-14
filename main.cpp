@@ -31,7 +31,7 @@ int main() {
 
 
     //create genetic agent stuff
-    GeneticAlgorithms ga = GeneticAlgorithms(10, 10, 0.5f, 0.01f);
+    GeneticAlgorithms ga = GeneticAlgorithms(10, 10, 0.55f, 0.1f);
 
 
     //create maze folders
@@ -44,8 +44,8 @@ int main() {
     static char loadPath[128] = "mazes/maze1.mz";
     static char message[128] = "";
 
-    static int mazeWidth = 10;
-    static int mazeHeight = 10;
+    static int mazeWidth = 5;
+    static int mazeHeight = 5;
     static bool visualizeGeneration = false;
     static bool visualizeSearch = false;
     static bool animating = false;
@@ -56,10 +56,10 @@ int main() {
     //static bool stepThrough = false;
     static float frameRate = 60.0f;
 
-    static int train_size = 250;
-    static int test_size = 250;
-    static int populationSize = 20;
-    static int generations = 25;
+    static int train_size = 100;
+    static int test_size = 100;
+    static int populationSize = 100;
+    static int generations = 100;
 
     ga.setPopulationSize(populationSize);
     ga.setGenerationCount(generations);
@@ -272,6 +272,7 @@ int main() {
             ga.loadMazes("train_mazes");
 
             ga.train();
+            ga.saveBestChromosome("best_chromosome.bin");
         }
         ImVec2 genPos = ImGui::GetWindowSize();
         ImGui::End();

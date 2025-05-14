@@ -45,9 +45,10 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
     // evaluate the chromosome's performance on the maze
     // this should return a score based on the maze and the chromosome's genes
     int currentCell = 0; //start at the top left
-    const int goalCell = (maze.width - 1) + (maze.height - 1) * maze.width; //goal is bottom right
+    const int goalCell = maze.cells.size() - 1; //goal is bottom right
     bool reachedGoal = false;
     int steps = 0;
+    int wallCollisions = 0;
     static constexpr int wallMasks[4] = {
         WALL_N,
         WALL_E,
@@ -74,9 +75,14 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
                 features[direction] = 0.0f; //no wall
             }
         }
+        int goalX = goalCell % maze.width;
+        int goalY = goalCell / maze.width;
+        int currentX = currentCell % maze.width;
+        int currentY = currentCell / maze.width;
 
-        features[4] = static_cast<float>(heuristic) / (maze.width + maze.height - 2); //normalize heuristic
-        features[5] = 1.0f; //bias term, leave at 1 to keep bias the same
+        features[4] = (goalX - currentX)/ float(maze.width); //normalize heuristic
+        features[5] = (goalY - currentY)/ float(maze.height); //normalize heuristic
+        features[6] = 1.0f; //bias term, leave at 1 to keep bias the same
 
         // create output array to hold the scores for each direction
         std::array<float, numOutputs> outputs{};
@@ -103,12 +109,14 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
         const int neighborY = currentCell / maze.width + dy[best];
         if (neighborX < 0 || neighborX >= maze.width || neighborY < 0 || neighborY >= maze.height) {
             //out of bounds, waste step
+            wallCollisions++;
             steps++;
             continue;
         }
         //if direction is blocked, waste step
         if (maze.cells[currentCell] & wallMasks[best]) {
             //blocked, waste step
+
             steps++;
             continue;
         }
@@ -120,16 +128,15 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
         steps++;
     }
     //calculate fitness score
-    float bonus = maze.width + maze.height;
-    float fitness = bonus * reachedGoal + (MAX_STEPS_PER_MAZE - steps) * 0.1f -
-                   DISTANCE_BONUS * calculateHeuristic(maze, currentCell, goalCell);
-    // float fitness = 1.0f / (1.0f + steps + DISTANCE_BONUS * calculateHeuristic(maze, currentCell, goalCell));
+    float fitness = 0.0f;
+    fitness += -STEP_PENALTY * steps;
+    fitness += -DISTANCE_BONUS * calculateHeuristic(maze, currentCell, goalCell);
+    fitness += -HIT_PENALTY * wallCollisions; //penalty for hitting a wall
 
-    //const float fitness = (reachedGoal ? GOAL_BONUS : 0.0f) - float(steps) - DISTANCE_BONUS * calculateHeuristic(
-                              //maze, currentCell, goalCell);
-    // float fitness = reachedGoal
-    // ? (GOAL_BONUS + (MAX_STEPS_PER_MAZE - steps))
-    // : (MAX_STEPS_PER_MAZE - steps) * 0.5f - DISTANCE_BONUS * calculateHeuristic(maze, currentCell, goalCell);
+    if (reachedGoal) {
+        fitness += GOAL_BONUS; //bonus for reaching the goal
+    }
+    fitness += STEP_PENALTY * MAX_STEPS_PER_MAZE;
     return fitness;
 }
 
@@ -166,33 +173,16 @@ void GeneticAlgorithms::evaluateChromosomes() {
 }
 
 Chromosome GeneticAlgorithms::selectParent() {
-    constexpr int tournamentSize = 4; //size of tournament
+    constexpr int tournamentSize = 7; //size of tournament
     //pick a parent with highest fitness from a set of randomly selected chromosomes
-    std::uniform_real_distribution<float> distribution(0.0f, population.size() - 1);
-    Chromosome bestParent = population[static_cast<int>(distribution(rng))];
+    std::uniform_int_distribution<int> distribution(0, population.size() - 1);
+    Chromosome bestParent = population[(distribution(rng))];
     for (int i = 1; i<tournamentSize; ++i) {
-        auto challenger = population[static_cast<int>(distribution(rng))];
+        auto challenger = population[(distribution(rng))];
         if (challenger.fitness > bestParent.fitness) {
             bestParent = challenger;
         }
     }
-
-    // const int numParents = populationSize/10; //select 10% of the population
-    // std::vector<Chromosome> selectedParents;
-    // selectedParents.reserve(numParents);
-    // std::uniform_int_distribution<int> distribution(0, population.size() - 1);
-    // for (int i = 0; i < numParents; ++i) {
-    //     int index = distribution(rng);
-    //     selectedParents.push_back(population[index]);
-    // }
-    // //select parent with highest fitness
-    // Chromosome bestParent = selectedParents[0];
-    // for (int i = 1; i < selectedParents.size(); ++i) {
-    //     if (selectedParents[i].fitness > bestParent.fitness) {
-    //         bestParent = selectedParents[i];
-    //     }
-    // }
-
     return bestParent;
 }
 
@@ -218,7 +208,7 @@ Chromosome GeneticAlgorithms::crossover(const Chromosome& parent1, const Chromos
 void GeneticAlgorithms::mutate(Chromosome &chromosome) {
     std::normal_distribution<float> distribution(0.0f, 0.1f); //random noise for mutation
     for (auto &gene : chromosome.genes) {
-        float coinflip = static_cast<float>(std::rand()) / RAND_MAX;
+        float coinflip = std::uniform_real_distribution<float>(0.0f, 1.0f)(rng);
         if (coinflip < mutationRate) {
             gene += distribution(rng); //add random noise to gene
             //clamp the gene to -1.0f to 1.0f
