@@ -47,6 +47,10 @@ public:
     void setPopulationSize(size_t populationSize) {this->populationSize = populationSize;}
     [[nodiscard]] const std::vector<Chromosome>& getPopulation() const{return population;}
     [[nodiscard]] const std::vector<Maze>& getMazes() const {return mazes;}
+    [[nodiscard]] static int getNumGenes() {return numGenes;}
+    static int getNumInputs() {return numInputs;}
+    static int getNumOutputs() {return numOutputs;}
+    static int getMaxSteps() {return MAX_STEPS_PER_MAZE;}
 
 
 

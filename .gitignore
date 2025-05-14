@@ -129,4 +129,4 @@ CMakeUserPresets.json
 /train_mazes/*.mz
 /mazes/*.mz
 /test_mazes/*
-
+/best_chromosome.bin

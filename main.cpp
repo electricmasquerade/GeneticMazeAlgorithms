@@ -274,6 +274,24 @@ int main() {
             ga.train();
             ga.saveBestChromosome("best_chromosome.bin");
         }
+        if (ImGui::Button("Load Agent")) {
+            solver.loadGenes("best_chromosome.bin");
+        }
+        if (ImGui::Button("Solve Maze with Agent")) {
+            //solver.setMaze(maze.getMaze());
+            solver.reset();
+            solver.setStartPosition(0, 0);
+            solver.setGoalPosition(maze.getMaze().width - 1, maze.getMaze().height - 1);
+            solver.solveGenetic();
+            renderer.buildVertexArrays(maze.getMaze());
+            if (visualizeSearch) {
+                renderer.startSearchAnim(maze.getMaze(), solver.getPath());
+                searching = true;
+            }
+            else {
+                searching = false;
+            }
+        }
         ImVec2 genPos = ImGui::GetWindowSize();
         ImGui::End();
 
