@@ -4,7 +4,8 @@ A C++17 sandbox that can **generate**, **render**, and **solve** perfect mazes i
 build a genetic algorithm that could train and solve mazes, but that bit is not quite working right now. It doesn't 
 train super well and barely solves any mazes. Not sure if I'll be able to fix it since I don't quite know enough 
 to fine-tune it. Not a total loss though, since the maze generation and rendering parts are working great. A* algo solves 
-mazes perfectly too, so it's a big improvement over my previous attempt in Python. Way way faster too. 
+mazes perfectly too, so it's a big improvement over my previous attempt in Python. Way way faster too. Also first time 
+building a GUI this in depth, which I look forward to using again. 
 
 
 It bundles three core modules:
