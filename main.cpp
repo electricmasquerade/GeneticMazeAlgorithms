@@ -8,6 +8,7 @@
 #include "Generator.h"
 #include "Renderer.h"
 #include "SolverAgent.h"
+#include "GeneticAlgorithms.h"
 
 
 int main() {
@@ -27,24 +28,41 @@ int main() {
     Maze currentMaze = maze.getMaze();
     renderer.buildVertexArrays(currentMaze);
 
+
+
+    //create genetic agent stuff
+    GeneticAlgorithms ga = GeneticAlgorithms(10, 10, 0.55f, 0.1f);
+
+
     //create maze folders
     std::filesystem::create_directory("mazes");
+    std::filesystem::create_directory("test_mazes");
+    std::filesystem::create_directory("train_mazes");
 
     //create file path buffers
     static char savePath[128] = "mazes/maze1.mz";
     static char loadPath[128] = "mazes/maze1.mz";
     static char message[128] = "";
 
-    static int mazeWidth = 10;
-    static int mazeHeight = 10;
+    static int mazeWidth = 5;
+    static int mazeHeight = 5;
     static bool visualizeGeneration = false;
     static bool visualizeSearch = false;
     static bool animating = false;
     static bool searching = false;
+
     //static bool paused = false;
     //bool stepOnce = false;
     //static bool stepThrough = false;
     static float frameRate = 60.0f;
+
+    static int train_size = 250;
+    static int test_size = 100;
+    static int populationSize = 100;
+    static int generations = 100;
+
+    ga.setPopulationSize(populationSize);
+    ga.setGenerationCount(generations);
 
 
     while (window.isOpen()) {
@@ -211,8 +229,73 @@ int main() {
         ImVec2 solverPos = ImGui::GetWindowSize();
         ImGui::End();
 
-
+        //set up batch generation and loading
         ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y + solverPos.y), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.1}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("Batch Generation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        if (ImGui::Button("Generate Train Mazes")) {
+            std::filesystem::remove_all("train_mazes");
+            //put batch into train_mazes folder
+            std::filesystem::create_directory("train_mazes");
+            for (int i = 0; i < train_size; ++i) {
+                maze = Generator(mazeWidth, mazeHeight);
+                maze.generateMaze();
+                std::string fileName = "train_mazes/maze" + std::to_string(i) + ".mz";
+                maze.saveMazeToFile(fileName);
+            }
+            std::cout << "Generated " << train_size << " mazes in train_mazes folder" << std::endl;
+
+        }
+        if (ImGui::Button("Generate Test Mazes")) {
+            std::filesystem::remove_all("test_mazes");
+            std::filesystem::create_directory("test_mazes");
+            for (int i = 0; i < test_size; ++i) {
+                maze = Generator(mazeWidth, mazeHeight);
+                maze.generateMaze();
+                std::string fileName = "test_mazes/maze" + std::to_string(i) + ".mz";
+                maze.saveMazeToFile(fileName);
+            }
+            std::cout << "Generated " << test_size << " mazes in test_mazes folder" << std::endl;
+
+        }
+
+        ImVec2 batchPos = ImGui::GetWindowSize();
+        ImGui::End();
+
+        //genetic stuff
+        ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y + solverPos.y + batchPos.y), ImGuiCond_Always);
+        ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.2f}, ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("Genetic Algorithms", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        if (ImGui::Button("Train Agent")) {
+            ga.loadMazes("train_mazes");
+
+            ga.train();
+            ga.saveBestChromosome("best_chromosome.bin");
+        }
+        if (ImGui::Button("Load Agent")) {
+            solver.loadGenes("best_chromosome.bin");
+        }
+        if (ImGui::Button("Solve Maze with Agent")) {
+            //solver.setMaze(maze.getMaze());
+            solver.reset();
+            solver.setStartPosition(0, 0);
+            solver.setGoalPosition(maze.getMaze().width - 1, maze.getMaze().height - 1);
+            solver.solveGenetic();
+            renderer.buildVertexArrays(maze.getMaze());
+            if (visualizeSearch) {
+                renderer.startSearchAnim(maze.getMaze(), solver.getPath());
+                searching = true;
+            }
+            else {
+                searching = false;
+            }
+        }
+        ImVec2 genPos = ImGui::GetWindowSize();
+        ImGui::End();
+
+        ImGui::SetNextWindowPos(ImVec2(0, controls_pos.y + data_pos.y + solverPos.y + batchPos.y + genPos.y), ImGuiCond_Always);
         ImGui::SetNextWindowSize({window.getSize().x * 0.2f, windowHeight * 0.1}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.5f);
         //ImGui::SetNextWindowSize(ImVec2(200, 100));

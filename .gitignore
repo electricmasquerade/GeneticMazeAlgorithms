@@ -125,3 +125,8 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 
+/mazes/
+/train_mazes/*.mz
+/mazes/*.mz
+/test_mazes/*
+/best_chromosome.bin

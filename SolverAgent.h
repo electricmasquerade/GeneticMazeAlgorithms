@@ -3,6 +3,7 @@
 #include <queue>
 #include <vector>
 #include "Generator.h"
+#include "GeneticAlgorithms.h"
 
 /* * SolverAgent.h
  *
@@ -57,6 +58,9 @@ public:
         return closedSet;
     }
 
+    void loadGenes(const std::string& genesFile);
+    void solveGenetic();
+
 
 
 
@@ -94,6 +98,10 @@ private:
     static constexpr uint8_t WALL_S = 1 << 1;
     static constexpr uint8_t WALL_E = 1 << 2;
     static constexpr uint8_t WALL_W = 1 << 3;
+
+    //genetic solver stuff
+    std::vector<float> genes; //this is the chromosome, i.e., the weights for the policy
+
 
 };
 
