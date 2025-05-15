@@ -56,7 +56,7 @@ int main() {
     //static bool stepThrough = false;
     static float frameRate = 60.0f;
 
-    static int train_size = 100;
+    static int train_size = 250;
     static int test_size = 100;
     static int populationSize = 100;
     static int generations = 100;

@@ -169,6 +169,7 @@ void SolverAgent::loadGenes(const std::string& genesFile) {
     for (const float num : genes) {
         std::cout<< num << " ";
     }
+    std::cout << std::endl;
 
 
 
@@ -196,6 +197,9 @@ void SolverAgent::solveGenetic() {
     }
 
     int currentCellID = startCellID;
+    path.clear();
+    solution.clear();
+    path.push_back(currentCellID);
 
     //solve maze using genetic algorithm
     int feature_size = GeneticAlgorithms::getNumInputs();
@@ -222,9 +226,10 @@ void SolverAgent::solveGenetic() {
         features[5] = (goalY - currentCellID / maze->width) / static_cast<float>(maze->height);
         features[6] = 1.0f; //bias term
 
+
         std::vector<float> outputs{};
-        int numOutputs = GeneticAlgorithms::getNumOutputs();
-        solution.resize(numOutputs);
+        const int numOutputs = GeneticAlgorithms::getNumOutputs();
+        outputs.resize(numOutputs);
 
         for (int i = 0; i < numOutputs; ++i) {
             float score = 0;
@@ -233,6 +238,7 @@ void SolverAgent::solveGenetic() {
             }
             outputs[i] = score;
         }
+
         // find the direction with the highest score
         int best = 0;
         float bestScore = outputs[0];
@@ -243,8 +249,8 @@ void SolverAgent::solveGenetic() {
             }
         }
         //check for neighbor out of bounds
-        auto neighborX = currentCellID % maze->width + dx[best];
-        auto neighborY = currentCellID / maze->width + dy[best];
+        const int neighborX = currentCellID % maze->width + dx[best];
+        const int neighborY = currentCellID / maze->width + dy[best];
         if (neighborX < 0 || neighborX >= maze->width || neighborY < 0 || neighborY >= maze->height) {
             //out of bounds, waste step
             steps++;
@@ -257,10 +263,18 @@ void SolverAgent::solveGenetic() {
             continue;
         }
         //add to path
-        path.push_back(currentCellID);
+
+
         currentCellID = neighborY * maze->width + neighborX; //move to new cell
+        path.push_back(currentCellID);
+
         //increment the step
         steps++;
+        std::cout << steps << std::endl;
+        //check if we reached the goal
+        if (currentCellID == goalCellID) {
+            solution = path;
+        }
 
     }
 }

@@ -65,11 +65,11 @@ private:
     std::vector<Maze> mazes;
 
     static constexpr size_t MAX_GENERATIONS = 1000;
-    static constexpr size_t MAX_POPULATION = 100;
-    static constexpr size_t MAX_STEPS_PER_MAZE = 1000;
+    static constexpr size_t MAX_POPULATION = 500;
+    static constexpr size_t MAX_STEPS_PER_MAZE = 1000; //max steps to take in a maze
     static constexpr int GOAL_BONUS = 1000; //bonus for reaching the goal
     static constexpr float STEP_PENALTY = 1.0f; //penalty for each step taken
-    static constexpr float HIT_PENALTY = 10.0f; //penalty for hitting a wall
+    static constexpr float HIT_PENALTY = 2.0f; //penalty for hitting a wall
     static constexpr float DISTANCE_BONUS = 2.0f; //bonus for distance to goal, smaller is better
     static constexpr size_t numInputs = 7; //number of inputs, 4 walls plus heuristic + bias term
     static constexpr size_t numOutputs = 4; //num of outputs, which is just the 4 directions

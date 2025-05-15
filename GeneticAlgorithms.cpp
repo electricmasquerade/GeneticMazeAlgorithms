@@ -13,6 +13,7 @@ GeneticAlgorithms::GeneticAlgorithms(const size_t populationSize, const size_t g
     mutationRate(mutationRate),
     rng(std::random_device{}()) {
     initPopulation(populationSize);
+    //MAX_STEPS_PER_MAZE = 100;
 }
 
 
@@ -38,15 +39,23 @@ void GeneticAlgorithms::loadMazes(const std::string& folderPath) {
         mazes.push_back(std::move(maze));
     }
     std::cout << "Loaded " << mazes.size() << " mazes from " << folderPath << std::endl;
+    //set max steps to be able to visit all cells of maze
+    //MAX_STEPS_PER_MAZE = mazes[0].width * mazes[0].height * 2;
+
 }
 
 
 float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome) const {
     // evaluate the chromosome's performance on the maze
     // this should return a score based on the maze and the chromosome's genes
+
     int currentCell = 0; //start at the top left
     const int goalCell = maze.cells.size() - 1; //goal is bottom right
     bool reachedGoal = false;
+    std::vector<bool> visited(maze.cells.size(), false);
+    visited[currentCell] = true;
+    int numRepeats = 0; //reset repeat visits
+    //populate this with visited or not to penalize repeat visits to cells
     int steps = 0;
     int wallCollisions = 0;
     static constexpr int wallMasks[4] = {
@@ -63,9 +72,10 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
         //read wall flags and feed into scoring array
 
         std::array<float, numInputs> features{};
-        //error is here
+
+
         const auto walls = maze.cells[currentCell];
-        // why though
+
 
         for (int direction = 0; direction < 4; ++direction) {
             if (walls & wallMasks[direction]) {
@@ -116,11 +126,20 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
         //if direction is blocked, waste step
         if (maze.cells[currentCell] & wallMasks[best]) {
             //blocked, waste step
-
+            wallCollisions++;
             steps++;
             continue;
         }
+
+        //penalize repeat visit
+        if (visited[neighborY * maze.width + neighborX]) {
+            numRepeats++;
+            steps++;
+            continue;
+        }
+
         currentCell = neighborY * maze.width + neighborX; //move to new cell
+        visited[currentCell] = true;
         if (currentCell == goalCell) {
             reachedGoal = true; //reached the goal
             //std::cout << "One reached the goal" << std::endl;
@@ -132,6 +151,7 @@ float GeneticAlgorithms::evaluate(const Maze &maze, const Chromosome &chromosome
     fitness += -STEP_PENALTY * steps;
     fitness += -DISTANCE_BONUS * calculateHeuristic(maze, currentCell, goalCell);
     fitness += -HIT_PENALTY * wallCollisions; //penalty for hitting a wall
+    fitness += -HIT_PENALTY * numRepeats; //penalty for revisiting a cell
 
     if (reachedGoal) {
         fitness += GOAL_BONUS; //bonus for reaching the goal
@@ -154,6 +174,7 @@ void GeneticAlgorithms::initPopulation(const size_t populationSize) {
     }
     std::cout << population.size() << " chromosomes generated" << std::endl;
 
+
 }
 
 void GeneticAlgorithms::evaluateChromosomes() {
@@ -173,7 +194,7 @@ void GeneticAlgorithms::evaluateChromosomes() {
 }
 
 Chromosome GeneticAlgorithms::selectParent() {
-    constexpr int tournamentSize = 7; //size of tournament
+    constexpr int tournamentSize = 4; //size of tournament
     //pick a parent with highest fitness from a set of randomly selected chromosomes
     std::uniform_int_distribution<int> distribution(0, population.size() - 1);
     Chromosome bestParent = population[(distribution(rng))];
@@ -235,6 +256,7 @@ void GeneticAlgorithms::selectBestChromosome() {
 
 void GeneticAlgorithms::train() {
     initPopulation(populationSize);
+
     std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
     for (size_t generation = 0; generation < generationCount; ++generation) {
         std::cout << "Generation " << generation << std::endl;
